@@ -100,7 +100,15 @@ export default async function Home({
       {/* Schritt 2: Prozess */}
       {selectedCompany && (
         <section className="space-y-3 rounded-lg border border-neutral-200 p-5">
-          <h2 className="font-medium text-lg">2. Prozess</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium text-lg">2. Prozess</h2>
+            <Link
+              href={`/auswertung/${selectedCompany.id}`}
+              className="text-sm text-brand hover:underline"
+            >
+              Tabellarische Auswertung →
+            </Link>
+          </div>
           <div className="flex flex-wrap gap-2">
             {processes.map((p) => (
               <Link

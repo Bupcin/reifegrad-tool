@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMeasurementResult } from "@/lib/scoring";
+import { scoreToColor } from "@/lib/colorScale";
 import DimensionRadarChart from "@/components/DimensionRadarChart";
 
 export default async function Dashboard({
@@ -83,8 +84,11 @@ export default async function Dashboard({
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-neutral-200">
                   <div
-                    className="h-1.5 rounded-full bg-brand"
-                    style={{ width: `${((c.average ?? 0) / 5) * 100}%` }}
+                    className="h-1.5 rounded-full"
+                    style={{
+                      width: `${((c.average ?? 0) / 5) * 100}%`,
+                      backgroundColor: scoreToColor(c.average),
+                    }}
                   />
                 </div>
               </div>
