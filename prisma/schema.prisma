@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  processes Process[]
+  createdAt DateTime  @default(now())
+}
+
+model Process {
+  id       String  @id @default(cuid())
+  name     String
+  category String?
+  customer String?
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  parent   Process?  @relation("ProcessHierarchy", fields: [parentId], references: [id])
+  parentId String?
+  children Process[] @relation("ProcessHierarchy")
+
+  measurements Measurement[]
+  createdAt    DateTime      @default(now())
+}
+
+model Dimension {
+  id         String     @id @default(cuid())
+  name       String
+  order      Int
+  criteria   Criterion[]
+}
+
+model Criterion {
+  id          String     @id @default(cuid())
+  name        String
+  order       Int
+  dimension   Dimension  @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  dimensionId String
+  questions   Question[]
+}
+
+model Question {
+  id          String     @id @default(cuid())
+  number      Int
+  text        String
+  hint        String?
+  criterion   Criterion  @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  criterionId String
+  answers     Answer[]
+}
+
+// A Measurement is one immutable survey run of a Process for a given year.
+// Historical measurements are never edited or overwritten - only new ones are created.
+model Measurement {
+  id        String   @id @default(cuid())
+  year      Int
+  process   Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  processId String
+  answers   Answer[]
+  createdAt DateTime @default(now())
+
+  @@index([processId, year])
+}
+
+model Answer {
+  id            String      @id @default(cuid())
+  value         Int?        // 1-5, or null when marked "nv" (nicht bewertbar)
+  comment       String?
+  measurement   Measurement @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  measurementId String
+  question      Question    @relation(fields: [questionId], references: [id])
+  questionId    String
+
+  @@unique([measurementId, questionId])
+}

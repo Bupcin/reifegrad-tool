@@ -1,69 +1,200 @@
-import Image from "next/image";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { createCompany, createProcess, getOrCreateMeasurement } from "./actions";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+async function createCompanyAction(formData: FormData) {
+  "use server";
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  const company = await createCompany(name);
+  redirect(`/?companyId=${company.id}`);
+}
+
+async function createProcessAction(formData: FormData) {
+  "use server";
+  const companyId = String(formData.get("companyId"));
+  const name = String(formData.get("name") || "").trim();
+  const category = String(formData.get("category") || "").trim();
+  const customer = String(formData.get("customer") || "").trim();
+  if (!name) return;
+  const process = await createProcess(companyId, name, category, customer);
+  redirect(`/?companyId=${companyId}&processId=${process.id}`);
+}
+
+async function startMeasurementAction(formData: FormData) {
+  "use server";
+  const processId = String(formData.get("processId"));
+  const companyId = String(formData.get("companyId"));
+  const year = Number(formData.get("year"));
+  const measurement = await getOrCreateMeasurement(processId, year);
+  redirect(`/fragebogen/${measurement.id}?companyId=${companyId}&processId=${processId}`);
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ companyId?: string; processId?: string }>;
+}) {
+  const params = await searchParams;
+  const companies = await prisma.company.findMany({ orderBy: { name: "asc" } });
+  const selectedCompany = params.companyId
+    ? companies.find((c) => c.id === params.companyId)
+    : undefined;
+
+  const processes = selectedCompany
+    ? await prisma.process.findMany({
+        where: { companyId: selectedCompany.id },
+        orderBy: { name: "asc" },
+      })
+    : [];
+
+  const selectedProcess = params.processId
+    ? processes.find((p) => p.id === params.processId)
+    : undefined;
+
+  const measurements = selectedProcess
+    ? await prisma.measurement.findMany({
+        where: { processId: selectedProcess.id },
+        orderBy: { year: "desc" },
+      })
+    : [];
+
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="mx-auto max-w-3xl p-8 space-y-8">
+      <h1 className="text-2xl font-semibold">Digitales Reifegradmessungs-Tool</h1>
+
+      {/* Schritt 1: Unternehmen */}
+      <section className="space-y-3 rounded-lg border border-neutral-200 p-5">
+        <h2 className="font-medium text-lg">1. Unternehmen</h2>
+        <div className="flex flex-wrap gap-2">
+          {companies.map((c) => (
+            <Link
+              key={c.id}
+              href={`/?companyId=${c.id}`}
+              className={`rounded-full px-3 py-1 text-sm border ${
+                selectedCompany?.id === c.id
+                  ? "bg-black text-white border-black"
+                  : "border-neutral-300 hover:bg-neutral-100"
+              }`}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {c.name}
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+        <form action={createCompanyAction} className="flex gap-2 pt-2">
+          <input
+            name="name"
+            placeholder="Neues Unternehmen / Organisationseinheit"
+            className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm"
+            required
+          />
+          <button className="rounded bg-black px-3 py-1.5 text-sm text-white">
+            Anlegen
+          </button>
+        </form>
+      </section>
+
+      {/* Schritt 2: Prozess */}
+      {selectedCompany && (
+        <section className="space-y-3 rounded-lg border border-neutral-200 p-5">
+          <h2 className="font-medium text-lg">2. Prozess</h2>
+          <div className="flex flex-wrap gap-2">
+            {processes.map((p) => (
+              <Link
+                key={p.id}
+                href={`/?companyId=${selectedCompany.id}&processId=${p.id}`}
+                className={`rounded-full px-3 py-1 text-sm border ${
+                  selectedProcess?.id === p.id
+                    ? "bg-black text-white border-black"
+                    : "border-neutral-300 hover:bg-neutral-100"
+                }`}
+              >
+                {p.name}
+              </Link>
+            ))}
+          </div>
+          <form action={createProcessAction} className="grid grid-cols-2 gap-2 pt-2">
+            <input type="hidden" name="companyId" value={selectedCompany.id} />
+            <input
+              name="name"
+              placeholder="Prozessname"
+              className="col-span-2 rounded border border-neutral-300 px-3 py-1.5 text-sm"
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <input
+              name="category"
+              placeholder="Prozesskategorie (optional)"
+              className="rounded border border-neutral-300 px-3 py-1.5 text-sm"
+            />
+            <input
+              name="customer"
+              placeholder="Kunde(-n) (optional)"
+              className="rounded border border-neutral-300 px-3 py-1.5 text-sm"
+            />
+            <button className="col-span-2 rounded bg-black px-3 py-1.5 text-sm text-white">
+              Prozess anlegen
+            </button>
+          </form>
+        </section>
+      )}
+
+      {/* Schritt 3: Messung */}
+      {selectedProcess && (
+        <section className="space-y-3 rounded-lg border border-neutral-200 p-5">
+          <h2 className="font-medium text-lg">3. Messung</h2>
+
+          {measurements.length > 0 && (
+            <ul className="space-y-1">
+              {measurements.map((m) => (
+                <li key={m.id} className="flex items-center justify-between text-sm">
+                  <span>Messjahr {m.year}</span>
+                  <div className="flex gap-3">
+                    <Link
+                      href={`/fragebogen/${m.id}?companyId=${selectedCompany!.id}&processId=${selectedProcess.id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Fragebogen
+                    </Link>
+                    <Link
+                      href={`/dashboard/${m.id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {measurements.length > 1 && (
+            <Link
+              href={`/vergleich/${selectedProcess.id}`}
+              className="inline-block text-sm text-blue-600 hover:underline"
+            >
+              Jahresvergleich anzeigen →
+            </Link>
+          )}
+
+          <form action={startMeasurementAction} className="flex gap-2 pt-2">
+            <input type="hidden" name="processId" value={selectedProcess.id} />
+            <input type="hidden" name="companyId" value={selectedCompany!.id} />
+            <input
+              name="year"
+              type="number"
+              defaultValue={currentYear}
+              className="w-28 rounded border border-neutral-300 px-3 py-1.5 text-sm"
+              required
+            />
+            <button className="rounded bg-black px-3 py-1.5 text-sm text-white">
+              Messung starten / fortsetzen
+            </button>
+          </form>
+        </section>
+      )}
+    </main>
   );
 }
