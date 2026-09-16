@@ -76,7 +76,7 @@ export default async function Home({
               href={`/?companyId=${c.id}`}
               className={`rounded-full px-3 py-1 text-sm border ${
                 selectedCompany?.id === c.id
-                  ? "bg-black text-white border-black"
+                  ? "bg-brand text-white border-brand"
                   : "border-neutral-300 hover:bg-neutral-100"
               }`}
             >
@@ -91,7 +91,7 @@ export default async function Home({
             className="flex-1 rounded border border-neutral-300 px-3 py-1.5 text-sm"
             required
           />
-          <button className="rounded bg-black px-3 py-1.5 text-sm text-white">
+          <button className="rounded bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-dark">
             Anlegen
           </button>
         </form>
@@ -108,7 +108,7 @@ export default async function Home({
                 href={`/?companyId=${selectedCompany.id}&processId=${p.id}`}
                 className={`rounded-full px-3 py-1 text-sm border ${
                   selectedProcess?.id === p.id
-                    ? "bg-black text-white border-black"
+                    ? "bg-brand text-white border-brand"
                     : "border-neutral-300 hover:bg-neutral-100"
                 }`}
               >
@@ -134,7 +134,7 @@ export default async function Home({
               placeholder="Kunde(-n) (optional)"
               className="rounded border border-neutral-300 px-3 py-1.5 text-sm"
             />
-            <button className="col-span-2 rounded bg-black px-3 py-1.5 text-sm text-white">
+            <button className="col-span-2 rounded bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-dark">
               Prozess anlegen
             </button>
           </form>
@@ -154,13 +154,13 @@ export default async function Home({
                   <div className="flex gap-3">
                     <Link
                       href={`/fragebogen/${m.id}?companyId=${selectedCompany!.id}&processId=${selectedProcess.id}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-brand hover:underline"
                     >
                       Fragebogen
                     </Link>
                     <Link
                       href={`/dashboard/${m.id}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-brand hover:underline"
                     >
                       Dashboard
                     </Link>
@@ -173,7 +173,7 @@ export default async function Home({
           {measurements.length > 1 && (
             <Link
               href={`/vergleich/${selectedProcess.id}`}
-              className="inline-block text-sm text-blue-600 hover:underline"
+              className="inline-block text-sm text-brand hover:underline"
             >
               Jahresvergleich anzeigen →
             </Link>
@@ -189,7 +189,7 @@ export default async function Home({
               className="w-28 rounded border border-neutral-300 px-3 py-1.5 text-sm"
               required
             />
-            <button className="rounded bg-black px-3 py-1.5 text-sm text-white">
+            <button className="rounded bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-dark">
               Messung starten / fortsetzen
             </button>
           </form>

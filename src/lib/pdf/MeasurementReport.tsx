@@ -3,7 +3,7 @@ import type { MeasurementResult } from "@/lib/scoring";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: "Helvetica" },
-  title: { fontSize: 18, marginBottom: 4 },
+  title: { fontSize: 18, marginBottom: 4, color: "#075a72" },
   subtitle: { fontSize: 11, color: "#555", marginBottom: 20 },
   overallBox: {
     borderWidth: 1,

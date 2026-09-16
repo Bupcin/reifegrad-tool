@@ -24,8 +24,8 @@ export default function DimensionRadarChart({ data }: { data: RadarDatum[] }) {
         <Radar
           name="Reifegrad"
           dataKey="score"
-          stroke="#2563eb"
-          fill="#2563eb"
+          stroke="#075a72"
+          fill="#075a72"
           fillOpacity={0.35}
         />
       </RadarChart>

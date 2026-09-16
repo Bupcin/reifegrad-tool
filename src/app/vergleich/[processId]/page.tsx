@@ -37,7 +37,7 @@ export default async function Vergleich({
   return (
     <main className="mx-auto max-w-3xl p-8 space-y-8">
       <div>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">
+        <Link href="/" className="text-sm text-brand hover:underline">
           ← Zurück zur Übersicht
         </Link>
         <h1 className="text-xl font-semibold mt-2">

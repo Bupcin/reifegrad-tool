@@ -32,7 +32,7 @@ export default async function Dashboard({
     <main className="mx-auto max-w-3xl p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
+          <Link href="/" className="text-sm text-brand hover:underline">
             ← Zurück zur Übersicht
           </Link>
           <h1 className="text-xl font-semibold mt-2">
@@ -48,7 +48,7 @@ export default async function Dashboard({
           </Link>
           <a
             href={`/api/pdf/${result.measurementId}`}
-            className="rounded bg-black px-3 py-1.5 text-sm text-white"
+            className="rounded bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-dark"
           >
             PDF-Bericht
           </a>
@@ -83,7 +83,7 @@ export default async function Dashboard({
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-neutral-200">
                   <div
-                    className="h-1.5 rounded-full bg-blue-600"
+                    className="h-1.5 rounded-full bg-brand"
                     style={{ width: `${((c.average ?? 0) / 5) * 100}%` }}
                   />
                 </div>

@@ -71,7 +71,7 @@ export default async function Fragebogen({
   return (
     <main className="mx-auto max-w-2xl p-8 space-y-6">
       <div>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">
+        <Link href="/" className="text-sm text-brand hover:underline">
           ← Zurück zur Übersicht
         </Link>
         <h1 className="text-xl font-semibold mt-2">
@@ -82,7 +82,7 @@ export default async function Fragebogen({
         </p>
         <div className="mt-2 h-2 w-full rounded-full bg-neutral-200">
           <div
-            className="h-2 rounded-full bg-black transition-all"
+            className="h-2 rounded-full bg-brand transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -149,7 +149,7 @@ export default async function Fragebogen({
           <button
             name="nav"
             value="next"
-            className="rounded bg-black px-4 py-2 text-sm text-white"
+            className="rounded bg-brand px-4 py-2 text-sm text-white hover:bg-brand-dark"
           >
             {dimIndex < totalDims ? "Speichern & Weiter →" : "Speichern & Abschließen"}
           </button>
