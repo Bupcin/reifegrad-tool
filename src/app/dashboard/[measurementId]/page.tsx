@@ -4,7 +4,8 @@ import { getMeasurementResult } from "@/lib/scoring";
 import { scoreToColor } from "@/lib/colorScale";
 import { prisma } from "@/lib/prisma";
 import DimensionRadarChart from "@/components/DimensionRadarChart";
-import YearComparisonChart from "@/components/YearComparisonChart";
+import YearBarChart from "@/components/YearBarChart";
+import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
 import YearCompareTable from "@/components/YearCompareTable";
 
 export default async function Dashboard({
@@ -27,15 +28,6 @@ export default async function Dashboard({
   const yearResults = (
     await Promise.all([...latestPerYear.values()].map((id) => getMeasurementResult(id)))
   ).filter((r): r is NonNullable<typeof r> => r !== null);
-  const dimensionNames = result.dimensions.map((d) => d.name);
-  const yearChartData = yearResults.map((r) => {
-    const row: Record<string, number | string> = { year: String(r.year) };
-    row["Gesamt"] = r.overallScore !== null ? Number(r.overallScore.toFixed(2)) : NaN;
-    for (const d of r.dimensions) {
-      row[d.name] = d.average !== null ? Number(d.average.toFixed(2)) : NaN;
-    }
-    return row;
-  });
 
   const radarData = result.dimensions.map((d) => ({
     dimension: d.name,
@@ -157,16 +149,16 @@ export default async function Dashboard({
         ) : (
           <>
             <div>
-              <h3 className="mb-2 text-sm text-neutral-600">Werte im Vergleich (Jahre nebeneinander)</h3>
+              <h3 className="mb-1 text-sm text-neutral-600">Gesamt und Dimensionen (Jahre nebeneinander)</h3>
+              <YearBarChart {...yearBarDimensions(yearResults)} />
+            </div>
+            <div>
+              <h3 className="mb-1 text-sm text-neutral-600">Kriterien (Jahre nebeneinander)</h3>
+              <YearBarChart {...yearBarCriteria(yearResults)} height={420} />
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm text-neutral-600">Werte im Vergleich (Tabelle mit Veränderung)</h3>
               <YearCompareTable results={yearResults} />
-            </div>
-            <div>
-              <h3 className="mb-1 text-sm text-neutral-600">Gesamtreifegrad</h3>
-              <YearComparisonChart data={yearChartData} series={["Gesamt"]} />
-            </div>
-            <div>
-              <h3 className="mb-1 text-sm text-neutral-600">Entwicklung je Dimension</h3>
-              <YearComparisonChart data={yearChartData} series={dimensionNames} />
             </div>
           </>
         )}

@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCompanyYearData, type MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
+import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
+import YearBarChart from "@/components/YearBarChart";
+import YearCompareTable, { DeltaCell, ScoreCell } from "@/components/YearCompareTable";
 import {
   CriteriaRadar,
   DimensionColumnChart,
@@ -16,6 +19,7 @@ const VIEWS = [
   { key: "gb", label: "Nach Geschäftsbereich" },
   { key: "dimensionen", label: "Nach Dimensionen" },
   { key: "tabelle", label: "Tabellarisch" },
+  { key: "jahre", label: "Jahresvergleich" },
 ] as const;
 
 function Cell({
@@ -63,6 +67,21 @@ export default async function Auswertung({
   const dimensionNames = companyResult?.dimensions.map((d) => d.name) ?? [];
   const groupRows = groups.filter((g) => g.result);
 
+  let yearCompany: MeasurementResult[] = [];
+  let yearGroups: { name: string; values: (number | null)[] }[] = [];
+  const ascYears = [...years].sort((a, b) => a - b);
+  if (view === "jahre") {
+    const perYear = await Promise.all(ascYears.map((y) => getCompanyYearData(companyId, y)));
+    yearCompany = perYear
+      .filter((d) => d.companyResult && d.year !== null)
+      .map((d) => ({ ...d.companyResult!, measurementId: `company-${d.year}`, year: d.year as number }));
+    const names = [...new Set(perYear.flatMap((d) => d.groups.filter((g) => g.result).map((g) => g.name)))];
+    yearGroups = names.map((n) => ({
+      name: n,
+      values: perYear.map((d) => d.groups.find((g) => g.name === n)?.result?.overallScore ?? null),
+    }));
+  }
+
   return (
     <main className="mx-auto max-w-6xl p-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -103,7 +122,7 @@ export default async function Auswertung({
         ))}
       </nav>
 
-      {!companyResult && (
+      {!companyResult && view !== "jahre" && (
         <p className="text-sm text-neutral-500">Noch keine Messungen für dieses Unternehmen vorhanden.</p>
       )}
 
@@ -205,6 +224,65 @@ export default async function Auswertung({
             })}
           />
         </section>
+      )}
+
+      {view === "jahre" && yearCompany.length < 2 && (
+        <p className="text-sm text-neutral-500">
+          Für den Jahresvergleich braucht es Messungen aus mindestens zwei verschiedenen Jahren.
+        </p>
+      )}
+
+      {view === "jahre" && yearCompany.length >= 2 && (
+        <div className="space-y-6">
+          <section className="rounded-lg border border-neutral-200 p-5">
+            <h2 className="mb-2 font-medium">Gesamt und Dimensionen (Jahre nebeneinander)</h2>
+            <YearBarChart {...yearBarDimensions(yearCompany)} />
+          </section>
+
+          <section className="rounded-lg border border-neutral-200 p-5">
+            <h2 className="mb-2 font-medium">Geschäftsbereiche (Jahre nebeneinander)</h2>
+            <YearBarChart
+              years={ascYears.map(String)}
+              data={yearGroups.map((g) => {
+                const row: Record<string, number | string> = { name: g.name };
+                ascYears.forEach((y, i) => (row[String(y)] = Number((g.values[i] ?? 0).toFixed(2))));
+                return row;
+              })}
+            />
+            <table className="mt-4 w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-neutral-50 text-left">
+                  <th className="border border-neutral-200 px-3 py-2">Geschäftsbereich</th>
+                  {ascYears.map((y) => (
+                    <th key={y} className="border border-neutral-200 px-3 py-2 text-center">{y}</th>
+                  ))}
+                  <th className="border border-neutral-200 px-3 py-2 text-center text-xs">Veränderung</th>
+                </tr>
+              </thead>
+              <tbody>
+                {yearGroups.map((g) => (
+                  <tr key={g.name}>
+                    <td className="border border-neutral-200 px-3 py-1.5">{g.name}</td>
+                    {g.values.map((v, i) => (
+                      <ScoreCell key={ascYears[i]} value={v} />
+                    ))}
+                    <DeltaCell from={g.values[g.values.length - 2] ?? null} to={g.values[g.values.length - 1] ?? null} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="rounded-lg border border-neutral-200 p-5">
+            <h2 className="mb-2 font-medium">Kriterien (Jahre nebeneinander)</h2>
+            <YearBarChart {...yearBarCriteria(yearCompany)} height={420} />
+          </section>
+
+          <section className="rounded-lg border border-neutral-200 p-5">
+            <h2 className="mb-3 font-medium">Werte im Vergleich (Tabelle mit Veränderung)</h2>
+            <YearCompareTable results={yearCompany} />
+          </section>
+        </div>
       )}
 
       {companyResult && view === "tabelle" && (

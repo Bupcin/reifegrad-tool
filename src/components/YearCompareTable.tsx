@@ -1,7 +1,7 @@
 import type { MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 
-function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
+export function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
   return (
     <td
       className={`border border-neutral-200 px-3 py-1 text-center text-xs ${bold ? "font-semibold" : "font-medium"}`}
@@ -12,7 +12,7 @@ function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
   );
 }
 
-function DeltaCell({ from, to, bold }: { from: number | null; to: number | null; bold?: boolean }) {
+export function DeltaCell({ from, to, bold }: { from: number | null; to: number | null; bold?: boolean }) {
   if (from === null || to === null) {
     return <td className="border border-neutral-200 px-3 py-1 text-center text-xs text-neutral-400">–</td>;
   }

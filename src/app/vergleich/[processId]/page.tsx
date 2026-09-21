@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getMeasurementResult } from "@/lib/scoring";
-import YearComparisonChart from "@/components/YearComparisonChart";
+import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
+import YearBarChart from "@/components/YearBarChart";
 import YearCompareTable from "@/components/YearCompareTable";
 
 export default async function Vergleich({
@@ -16,55 +17,54 @@ export default async function Vergleich({
 
   const measurements = await prisma.measurement.findMany({
     where: { processId },
-    orderBy: { year: "asc" },
+    orderBy: [{ year: "asc" }, { createdAt: "desc" }],
   });
+  const latestPerYear = new Map<number, string>();
+  for (const m of measurements) {
+    if (!latestPerYear.has(m.year)) latestPerYear.set(m.year, m.id);
+  }
 
-  const results = await Promise.all(
-    measurements.map((m) => getMeasurementResult(m.id))
-  );
-  const validResults = results.filter((r) => r !== null);
-
-  const dimensionNames = validResults[0]?.dimensions.map((d) => d.name) ?? [];
-
-  const chartData = validResults.map((r) => {
-    const row: Record<string, number | string> = { year: String(r.year) };
-    row["Gesamt"] = r.overallScore !== null ? Number(r.overallScore.toFixed(2)) : NaN;
-    for (const d of r.dimensions) {
-      row[d.name] = d.average !== null ? Number(d.average.toFixed(2)) : NaN;
-    }
-    return row;
-  });
+  const results = (
+    await Promise.all([...latestPerYear.values()].map((id) => getMeasurementResult(id)))
+  )
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .sort((a, b) => a.year - b.year);
 
   return (
-    <main className="mx-auto max-w-3xl p-8 space-y-8">
+    <main className="mx-auto max-w-4xl p-8 space-y-8">
       <div>
         <Link href="/" className="text-sm text-brand hover:underline">
           ← Zurück zur Übersicht
         </Link>
-        <h1 className="text-xl font-semibold mt-2">
-          Jahresvergleich — {process.name}
-        </h1>
+        <h1 className="text-xl font-semibold mt-2">Jahresvergleich — {process.name}</h1>
       </div>
 
-      {validResults.length === 0 && (
+      {results.length === 0 && (
         <p className="text-sm text-neutral-500">Noch keine Messungen vorhanden.</p>
       )}
 
-      {validResults.length > 0 && (
+      {results.length === 1 && (
+        <p className="text-sm text-neutral-500">
+          Bisher nur die Messung {results[0].year}. Für den Vergleich eine weitere Messung mit
+          einem anderen Jahr anlegen.
+        </p>
+      )}
+
+      {results.length > 0 && (
         <>
           <section className="rounded-lg border border-neutral-200 p-5">
-            <h2 className="mb-2 font-medium">Gesamtreifegrad über die Zeit</h2>
-            <YearComparisonChart data={chartData} series={["Gesamt"]} />
+            <h2 className="mb-2 font-medium">Gesamt und Dimensionen (Jahre nebeneinander)</h2>
+            <YearBarChart {...yearBarDimensions(results)} />
           </section>
 
           <section className="rounded-lg border border-neutral-200 p-5">
-            <h2 className="mb-2 font-medium">Entwicklung je Dimension</h2>
-            <YearComparisonChart data={chartData} series={dimensionNames} />
+            <h2 className="mb-2 font-medium">Kriterien (Jahre nebeneinander)</h2>
+            <YearBarChart {...yearBarCriteria(results)} height={420} />
           </section>
 
           <section className="rounded-lg border border-neutral-200 p-5">
-            <h2 className="mb-3 font-medium">Werte im Vergleich (Jahre nebeneinander)</h2>
-            <YearCompareTable results={validResults} />
+            <h2 className="mb-3 font-medium">Werte im Vergleich (Tabelle mit Veränderung)</h2>
+            <YearCompareTable results={results} />
           </section>
         </>
       )}

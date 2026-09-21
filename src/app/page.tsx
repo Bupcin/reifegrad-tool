@@ -2,6 +2,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createCompany, createProcess, getOrCreateMeasurement } from "./actions";
 import { redirect } from "next/navigation";
+import { getMeasurementResult } from "@/lib/scoring";
+import YearCompareTable from "@/components/YearCompareTable";
+import YearBarChart from "@/components/YearBarChart";
+import { yearBarDimensions } from "@/lib/yearData";
 
 async function createCompanyAction(formData: FormData) {
   "use server";
@@ -58,9 +62,20 @@ export default async function Home({
   const measurements = selectedProcess
     ? await prisma.measurement.findMany({
         where: { processId: selectedProcess.id },
-        orderBy: { year: "desc" },
+        orderBy: [{ year: "desc" }, { createdAt: "desc" }],
       })
     : [];
+
+  const latestPerYear = new Map<number, string>();
+  for (const m of measurements) {
+    if (!latestPerYear.has(m.year)) latestPerYear.set(m.year, m.id);
+  }
+  const yearResults =
+    latestPerYear.size >= 2
+      ? (await Promise.all([...latestPerYear.values()].map((id) => getMeasurementResult(id))))
+          .filter((r): r is NonNullable<typeof r> => r !== null)
+          .sort((a, b) => a.year - b.year)
+      : [];
 
   const currentYear = new Date().getFullYear();
 
@@ -200,6 +215,14 @@ export default async function Home({
             >
               Jahresvergleich anzeigen →
             </Link>
+          )}
+
+          {yearResults.length >= 2 && (
+            <div className="space-y-2 pt-2">
+              <h3 className="text-sm font-medium">Jahresvergleich {selectedProcess.name}</h3>
+              <YearBarChart {...yearBarDimensions(yearResults)} height={320} />
+              <YearCompareTable results={yearResults} />
+            </div>
           )}
 
           <form action={startMeasurementAction} className="flex gap-2 pt-2">
