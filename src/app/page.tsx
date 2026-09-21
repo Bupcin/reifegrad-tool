@@ -17,8 +17,9 @@ async function createProcessAction(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const category = String(formData.get("category") || "").trim();
   const customer = String(formData.get("customer") || "").trim();
+  const parentId = String(formData.get("parentId") || "") || null;
   if (!name) return;
-  const process = await createProcess(companyId, name, category, customer);
+  const process = await createProcess(companyId, name, category, customer, parentId);
   redirect(`/?companyId=${companyId}&processId=${process.id}`);
 }
 
@@ -46,6 +47,7 @@ export default async function Home({
     ? await prisma.process.findMany({
         where: { companyId: selectedCompany.id },
         orderBy: { name: "asc" },
+        include: { parent: true },
       })
     : [];
 
@@ -106,7 +108,7 @@ export default async function Home({
               href={`/auswertung/${selectedCompany.id}`}
               className="text-sm text-brand hover:underline"
             >
-              Tabellarische Auswertung →
+              Auswertung (Gesamt · Geschäftsbereiche · Dimensionen · Tabelle) →
             </Link>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -120,7 +122,7 @@ export default async function Home({
                     : "border-neutral-300 hover:bg-neutral-100"
                 }`}
               >
-                {p.name}
+                {p.parent ? `${p.parent.name} › ${p.name}` : p.name}
               </Link>
             ))}
           </div>
@@ -128,10 +130,23 @@ export default async function Home({
             <input type="hidden" name="companyId" value={selectedCompany.id} />
             <input
               name="name"
-              placeholder="Prozessname"
+              placeholder="Prozessname bzw. Geschäftsbereich"
               className="col-span-2 rounded border border-neutral-300 px-3 py-1.5 text-sm"
               required
             />
+            <select
+              name="parentId"
+              className="col-span-2 rounded border border-neutral-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">Oberste Ebene (Geschäftsbereich)</option>
+              {processes
+                .filter((p) => !p.parentId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    gehört zu Geschäftsbereich: {p.name}
+                  </option>
+                ))}
+            </select>
             <input
               name="category"
               placeholder="Prozesskategorie (optional)"

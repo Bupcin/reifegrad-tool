@@ -13,11 +13,13 @@ export async function createProcess(
   companyId: string,
   name: string,
   category: string,
-  customer: string
+  customer: string,
+  parentId: string | null = null
 ) {
   const process = await prisma.process.create({
     data: {
       companyId,
+      parentId,
       name,
       category: category || null,
       customer: customer || null,

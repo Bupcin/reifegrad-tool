@@ -119,6 +119,142 @@ export async function getMeasurementResult(
   };
 }
 
+// Mittelt mehrere Messungen fragenweise (nv wird ignoriert) und rechnet
+// Kriterium -> Dimension -> Gesamt wie bei einer einzelnen Messung.
+export function aggregateResults(
+  results: MeasurementResult[],
+  name: string
+): MeasurementResult | null {
+  if (results.length === 0) return null;
+  const template = results[0];
+
+  const dimensions: DimensionScore[] = template.dimensions.map((dim, di) => {
+    const criteria: CriterionScore[] = dim.criteria.map((crit, ci) => {
+      const questions: QuestionScore[] = crit.questions.map((q, qi) => {
+        const values = results
+          .map((r) => r.dimensions[di].criteria[ci].questions[qi].value)
+          .filter((v): v is number => v !== null);
+        return { ...q, value: average(values), comment: null };
+      });
+      const values = questions
+        .map((q) => q.value)
+        .filter((v): v is number => v !== null);
+      return { ...crit, average: average(values), questions };
+    });
+    const avgs = criteria
+      .map((c) => c.average)
+      .filter((v): v is number => v !== null);
+    return { ...dim, average: average(avgs), criteria };
+  });
+
+  const dimAvgs = dimensions
+    .map((d) => d.average)
+    .filter((v): v is number => v !== null);
+
+  return {
+    measurementId: "",
+    processId: "",
+    processName: name,
+    year: template.year,
+    overallScore: average(dimAvgs),
+    dimensions,
+  };
+}
+
+export interface ProcessRow {
+  id: string;
+  name: string;
+  measurementId: string | null;
+  result: MeasurementResult | null;
+}
+
+export interface GroupRow {
+  id: string;
+  name: string;
+  measurementId: string | null;
+  result: MeasurementResult | null;
+  children: ProcessRow[];
+}
+
+export interface CompanyYearData {
+  years: number[];
+  year: number | null;
+  groups: GroupRow[];
+  companyResult: MeasurementResult | null;
+}
+
+// Geschäftsbereich = oberste Prozessebene. Sein Ergebnis ist der Mittelwert der
+// untergeordneten Prozesse (oder seine eigene Messung, wenn er keine hat).
+export async function getCompanyYearData(
+  companyId: string,
+  requestedYear?: number
+): Promise<CompanyYearData> {
+  const yearRows = await prisma.measurement.findMany({
+    where: { process: { companyId } },
+    select: { year: true },
+    distinct: ["year"],
+    orderBy: { year: "desc" },
+  });
+  const years = yearRows.map((y) => y.year);
+  const year = requestedYear && years.includes(requestedYear) ? requestedYear : years[0] ?? null;
+  if (year === null) return { years, year, groups: [], companyResult: null };
+
+  const processes = await prisma.process.findMany({
+    where: { companyId },
+    orderBy: { name: "asc" },
+  });
+  const measurements = await prisma.measurement.findMany({
+    where: { year, process: { companyId } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const latestByProcess = new Map<string, string>();
+  for (const m of measurements) {
+    if (!latestByProcess.has(m.processId)) latestByProcess.set(m.processId, m.id);
+  }
+  const resultByProcess = new Map<string, MeasurementResult>();
+  await Promise.all(
+    [...latestByProcess.entries()].map(async ([processId, measurementId]) => {
+      const r = await getMeasurementResult(measurementId);
+      if (r) resultByProcess.set(processId, r);
+    })
+  );
+
+  const leafResults: MeasurementResult[] = [];
+  const groups: GroupRow[] = processes
+    .filter((p) => !p.parentId)
+    .map((top) => {
+      const children: ProcessRow[] = processes
+        .filter((p) => p.parentId === top.id)
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          measurementId: latestByProcess.get(c.id) ?? null,
+          result: resultByProcess.get(c.id) ?? null,
+        }));
+      const childResults = children
+        .map((c) => c.result)
+        .filter((r): r is MeasurementResult => r !== null);
+      const own = resultByProcess.get(top.id) ?? null;
+      leafResults.push(...(children.length > 0 ? childResults : own ? [own] : []));
+      return {
+        id: top.id,
+        name: top.name,
+        measurementId: latestByProcess.get(top.id) ?? null,
+        result: childResults.length > 0 ? aggregateResults(childResults, top.name) : own,
+        children,
+      };
+    })
+    .filter((g) => g.result !== null || g.children.length > 0);
+
+  return {
+    years,
+    year,
+    groups,
+    companyResult: aggregateResults(leafResults, "Gesamt"),
+  };
+}
+
 export function scoreToPercent(score: number | null): number | null {
   if (score === null) return null;
   // Skala 1-5 -> 0-100%: 1 = 0%, 5 = 100%
