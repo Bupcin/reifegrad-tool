@@ -12,8 +12,8 @@ import {
   YAxis,
 } from "recharts";
 
-// neuestes Jahr in Markenfarbe, ältere Jahre heller
-const COLORS_FROM_NEWEST = ["#075a72", "#6fa3b3", "#b7cfd6", "#f59e0b", "#7c3aed"];
+// deutlich unterscheidbare Farben, ältestes Jahr zuerst
+const YEAR_COLORS = ["#f59e0b", "#075a72", "#16a34a", "#7c3aed", "#dc2626", "#0ea5e9"];
 
 const fmt = (v: unknown) => Number(v).toFixed(2);
 
@@ -26,9 +26,7 @@ export default function YearBarChart({
   years: string[];
   height?: number;
 }) {
-  const colors = years.map(
-    (_, i) => COLORS_FROM_NEWEST[(years.length - 1 - i) % COLORS_FROM_NEWEST.length]
-  );
+  const colors = years.map((_, i) => YEAR_COLORS[i % YEAR_COLORS.length]);
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 20, bottom: 50 }}>
