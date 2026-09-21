@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getMeasurementResult } from "@/lib/scoring";
 import YearComparisonChart from "@/components/YearComparisonChart";
+import YearCompareTable from "@/components/YearCompareTable";
 
 export default async function Vergleich({
   params,
@@ -62,33 +63,8 @@ export default async function Vergleich({
           </section>
 
           <section className="rounded-lg border border-neutral-200 p-5">
-            <h2 className="mb-3 font-medium">Werte im Überblick</h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-left">
-                  <th className="py-1">Jahr</th>
-                  <th className="py-1">Gesamt</th>
-                  {dimensionNames.map((name) => (
-                    <th key={name} className="py-1">
-                      {name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {validResults.map((r) => (
-                  <tr key={r.measurementId} className="border-b border-neutral-100">
-                    <td className="py-1">{r.year}</td>
-                    <td className="py-1">{r.overallScore?.toFixed(2) ?? "–"}</td>
-                    {r.dimensions.map((d) => (
-                      <td key={d.dimensionId} className="py-1">
-                        {d.average?.toFixed(2) ?? "–"}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <h2 className="mb-3 font-medium">Werte im Vergleich (Jahre nebeneinander)</h2>
+            <YearCompareTable results={validResults} />
           </section>
         </>
       )}

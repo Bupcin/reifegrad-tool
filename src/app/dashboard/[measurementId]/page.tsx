@@ -5,6 +5,7 @@ import { scoreToColor } from "@/lib/colorScale";
 import { prisma } from "@/lib/prisma";
 import DimensionRadarChart from "@/components/DimensionRadarChart";
 import YearComparisonChart from "@/components/YearComparisonChart";
+import YearCompareTable from "@/components/YearCompareTable";
 
 export default async function Dashboard({
   params,
@@ -156,6 +157,10 @@ export default async function Dashboard({
         ) : (
           <>
             <div>
+              <h3 className="mb-2 text-sm text-neutral-600">Werte im Vergleich (Jahre nebeneinander)</h3>
+              <YearCompareTable results={yearResults} />
+            </div>
+            <div>
               <h3 className="mb-1 text-sm text-neutral-600">Gesamtreifegrad</h3>
               <YearComparisonChart data={yearChartData} series={["Gesamt"]} />
             </div>
@@ -163,28 +168,6 @@ export default async function Dashboard({
               <h3 className="mb-1 text-sm text-neutral-600">Entwicklung je Dimension</h3>
               <YearComparisonChart data={yearChartData} series={dimensionNames} />
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-left">
-                  <th className="py-1">Jahr</th>
-                  <th className="py-1">Gesamt</th>
-                  {dimensionNames.map((n) => (
-                    <th key={n} className="py-1">{n}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {yearResults.map((r) => (
-                  <tr key={r.measurementId} className="border-b border-neutral-100">
-                    <td className="py-1">{r.year}</td>
-                    <td className="py-1">{r.overallScore?.toFixed(2) ?? "–"}</td>
-                    {r.dimensions.map((d) => (
-                      <td key={d.dimensionId} className="py-1">{d.average?.toFixed(2) ?? "–"}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </>
         )}
       </section>
