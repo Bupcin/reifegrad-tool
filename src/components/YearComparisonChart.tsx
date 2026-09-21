@@ -30,6 +30,7 @@ export default function YearComparisonChart({
         <Legend />
         {series.map((key, i) => (
           <Line
+            isAnimationActive={false}
             key={key}
             type="monotone"
             dataKey={key}
