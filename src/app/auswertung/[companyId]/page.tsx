@@ -7,8 +7,8 @@ import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
 import YearBarChart from "@/components/YearBarChart";
 import YearCompareTable, { DeltaCell, ScoreCell } from "@/components/YearCompareTable";
+import CriteriaRadarChart from "@/components/CriteriaRadarChart";
 import {
-  CriteriaRadar,
   DimensionColumnChart,
   GaugeDonut,
   GroupStackedChart,
@@ -16,11 +16,28 @@ import {
 
 const VIEWS = [
   { key: "gesamt", label: "Gesamt" },
-  { key: "gb", label: "Nach Geschäftsbereich" },
-  { key: "dimensionen", label: "Nach Dimensionen" },
+  { key: "gb", label: "Auswertung GB" },
+  { key: "dimensionen", label: "Auswertung Dimension" },
   { key: "tabelle", label: "Tabellarisch" },
   { key: "jahre", label: "Jahresvergleich" },
+  { key: "massnahmen", label: "Maßnahmenidentifizierung" },
 ] as const;
+
+interface Handlungsfeld {
+  criterionId: string;
+  name: string;
+  dimensionName: string;
+  average: number | null;
+}
+
+function weakestCriteria(result: MeasurementResult, n: number): Handlungsfeld[] {
+  const all = result.dimensions.flatMap((d) =>
+    d.criteria
+      .filter((c) => c.average !== null)
+      .map((c) => ({ criterionId: c.criterionId, name: c.name, dimensionName: d.name, average: c.average }))
+  );
+  return all.sort((a, b) => (a.average ?? 0) - (b.average ?? 0)).slice(0, n);
+}
 
 function Cell({
   value,
@@ -176,9 +193,9 @@ export default async function Auswertung({
           <div className="space-y-6">
             <section className="rounded-lg border border-neutral-200 p-5">
               <h2 className="mb-2 font-medium">Visualisierung Bewertungsergebnis</h2>
-              <CriteriaRadar
-                data={companyResult.dimensions.flatMap((d) =>
-                  d.criteria.map((c) => ({ name: c.name, value: c.average ?? 0 }))
+              <CriteriaRadarChart
+                data={companyResult.dimensions.flatMap((d, di) =>
+                  d.criteria.map((c) => ({ name: c.name, value: c.average ?? 0, dimIndex: di }))
                 )}
               />
             </section>
@@ -291,6 +308,72 @@ export default async function Auswertung({
           companyResult={companyResult}
           groupRows={groupRows}
         />
+      )}
+
+      {companyResult && view === "massnahmen" && (
+        <div className="space-y-6">
+          <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+            <h2 className="font-medium text-amber-800">
+              Handlungsfelder {company.name} (schwächste Kriterien, gesamt)
+            </h2>
+            <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+              {weakestCriteria(companyResult, 5).map((c) => (
+                <li key={c.criterionId} className="flex items-center justify-between gap-3 rounded bg-white px-3 py-1.5">
+                  <span>{c.name} <span className="text-neutral-500">({c.dimensionName})</span></span>
+                  <span
+                    className="rounded px-2 py-0.5 text-xs font-semibold"
+                    style={{ backgroundColor: scoreToColor(c.average), color: scoreToTextColor(c.average) }}
+                  >
+                    {c.average?.toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-lg border border-neutral-200 p-5">
+            <h2 className="mb-3 font-medium">Handlungsfelder je Geschäftsbereich</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-neutral-50 text-left">
+                    <th className="border border-neutral-200 px-3 py-2">Geschäftsbereich</th>
+                    <th className="border border-neutral-200 px-3 py-2">Handlungsfeld 1</th>
+                    <th className="border border-neutral-200 px-3 py-2">Handlungsfeld 2</th>
+                    <th className="border border-neutral-200 px-3 py-2">Handlungsfeld 3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupRows.map((g) => {
+                    const weak = weakestCriteria(g.result!, 3);
+                    return (
+                      <tr key={g.id}>
+                        <td className="border border-neutral-200 px-3 py-1.5 font-medium">{g.name}</td>
+                        {[0, 1, 2].map((i) => (
+                          <td key={i} className="border border-neutral-200 px-3 py-1.5">
+                            {weak[i] ? (
+                              <span className="flex items-center justify-between gap-2">
+                                <span>{weak[i].name}</span>
+                                <span
+                                  className="rounded px-1.5 py-0.5 text-xs font-semibold"
+                                  style={{ backgroundColor: scoreToColor(weak[i].average), color: scoreToTextColor(weak[i].average) }}
+                                >
+                                  {weak[i].average?.toFixed(2)}
+                                </span>
+                              </span>
+                            ) : (
+                              "–"
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       )}
     </main>
   );
