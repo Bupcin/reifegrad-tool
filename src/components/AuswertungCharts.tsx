@@ -8,16 +8,35 @@ import {
   Legend,
   Pie,
   PieChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { DIMENSION_COLORS } from "@/lib/dimensionColors";
 
 const BRAND = "#075a72";
+const DIMENSION_COLORS = ["#075a72", "#16a34a", "#d97706", "#dc2626", "#7c3aed"];
 
 const fmt = (v: unknown) => Number(v).toFixed(2);
+
+export function CriteriaRadar({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={420}>
+      <RadarChart data={data} outerRadius="70%">
+        <PolarGrid />
+        <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
+        <PolarRadiusAxis domain={[0, 5]} tickCount={6} tick={{ fontSize: 10 }} />
+        <Radar isAnimationActive={false} dataKey="value" stroke={BRAND} fill={BRAND} fillOpacity={0.35} />
+        <Tooltip formatter={fmt} />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+}
 
 export function GaugeDonut({
   value,
