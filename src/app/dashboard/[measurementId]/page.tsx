@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMeasurementResult } from "@/lib/scoring";
-import { scoreToColor } from "@/lib/colorScale";
+import { dimensionColor } from "@/lib/dimensionColors";
 import { prisma } from "@/lib/prisma";
-import DimensionRadarChart from "@/components/DimensionRadarChart";
+import CriteriaRadarChart from "@/components/CriteriaRadarChart";
 import YearBarChart from "@/components/YearBarChart";
 import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
 import YearCompareTable from "@/components/YearCompareTable";
@@ -29,10 +29,9 @@ export default async function Dashboard({
     await Promise.all([...latestPerYear.values()].map((id) => getMeasurementResult(id)))
   ).filter((r): r is NonNullable<typeof r> => r !== null);
 
-  const radarData = result.dimensions.map((d) => ({
-    dimension: d.name,
-    score: d.average ?? 0,
-  }));
+  const radarData = result.dimensions.flatMap((d, di) =>
+    d.criteria.map((c) => ({ name: c.name, value: c.average ?? 0, dimIndex: di }))
+  );
 
   const allCriteria = result.dimensions.flatMap((d) =>
     d.criteria
@@ -75,21 +74,27 @@ export default async function Dashboard({
       <section className="rounded-lg border border-neutral-200 p-5 text-center">
         <p className="text-sm text-neutral-500">Gesamtreifegrad</p>
         <p className="text-4xl font-semibold">
-          {result.overallScore?.toFixed(2) ?? "–"} / 5
+          {result.overallScore !== null ? result.overallScore.toFixed(1).replace(".", ",") : "–"} / 5,0
         </p>
       </section>
 
       <section className="rounded-lg border border-neutral-200 p-5">
         <h2 className="mb-2 font-medium">Ergebnisse je Dimension</h2>
-        <DimensionRadarChart data={radarData} />
+        <CriteriaRadarChart data={radarData} />
       </section>
 
       <section className="rounded-lg border border-neutral-200 p-5 space-y-3">
         <h2 className="font-medium">Details je Dimension und Kriterium</h2>
-        {result.dimensions.map((d) => (
+        {result.dimensions.map((d, di) => (
           <div key={d.dimensionId} className="space-y-1">
             <div className="flex justify-between text-sm font-medium">
-              <span>{d.name}</span>
+              <span className="flex items-center gap-2">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: dimensionColor(di) }}
+                />
+                {d.name}
+              </span>
               <span>{d.average?.toFixed(2) ?? "–"} / 5</span>
             </div>
             {d.criteria.map((c) => (
@@ -103,7 +108,7 @@ export default async function Dashboard({
                     className="h-1.5 rounded-full"
                     style={{
                       width: `${((c.average ?? 0) / 5) * 100}%`,
-                      backgroundColor: scoreToColor(c.average),
+                      backgroundColor: dimensionColor(di),
                     }}
                   />
                 </div>
