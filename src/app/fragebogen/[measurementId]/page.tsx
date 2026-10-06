@@ -43,7 +43,9 @@ export default async function Fragebogen({
     (sum, d) => sum + d.criteria.reduce((s, c) => s + c.questions.length, 0),
     0
   );
-  const answeredCount = measurement.answers.filter((a) => a.value !== null || a.comment).length;
+  // „nicht bewertbar" ist eine Antwort (gespeichert mit Wert null) und zählt mit.
+  // Unbeantwortete Fragen werden gar nicht gespeichert.
+  const answeredCount = measurement.answers.length;
 
   async function submitDimension(formData: FormData) {
     "use server";
@@ -51,7 +53,9 @@ export default async function Fragebogen({
       for (const question of criterion.questions) {
         const raw = formData.get(`q_${question.id}`);
         const comment = String(formData.get(`c_${question.id}`) || "");
-        const value = raw === "nv" || raw === null || raw === "" ? null : Number(raw);
+        const answered = raw !== null && raw !== "";
+        if (!answered && !comment) continue;
+        const value = !answered || raw === "nv" ? null : Number(raw);
         await saveAnswer(measurementId, question.id, value, comment);
       }
     }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMeasurementResult } from "@/lib/scoring";
 import { dimensionColor } from "@/lib/dimensionColors";
+import { fmt1 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import CriteriaRadarChart from "@/components/CriteriaRadarChart";
 import YearBarChart from "@/components/YearBarChart";
@@ -74,7 +75,7 @@ export default async function Dashboard({
       <section className="rounded-lg border border-neutral-200 p-5 text-center">
         <p className="text-sm text-neutral-500">Gesamtreifegrad</p>
         <p className="text-4xl font-semibold">
-          {result.overallScore !== null ? result.overallScore.toFixed(1).replace(".", ",") : "–"} / 5,0
+          {fmt1(result.overallScore)} / 5,0
         </p>
       </section>
 
@@ -95,13 +96,13 @@ export default async function Dashboard({
                 />
                 {d.name}
               </span>
-              <span>{d.average?.toFixed(2) ?? "–"} / 5</span>
+              <span>{fmt1(d.average)} / 5,0</span>
             </div>
             {d.criteria.map((c) => (
               <div key={c.criterionId} className="pl-4">
                 <div className="flex justify-between text-xs text-neutral-600">
                   <span>{c.name}</span>
-                  <span>{c.average?.toFixed(2) ?? "–"}</span>
+                  <span>{fmt1(c.average)}</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-neutral-200">
                   <div
@@ -125,7 +126,7 @@ export default async function Dashboard({
             {strengths.map((c) => (
               <li key={c.criterionId} className="flex justify-between">
                 <span>{c.name} ({c.dimensionName})</span>
-                <span className="font-medium">{c.average?.toFixed(2)}</span>
+                <span className="font-medium">{fmt1(c.average)}</span>
               </li>
             ))}
           </ul>
@@ -136,7 +137,7 @@ export default async function Dashboard({
             {weaknesses.map((c) => (
               <li key={c.criterionId} className="flex justify-between">
                 <span>{c.name} ({c.dimensionName})</span>
-                <span className="font-medium">{c.average?.toFixed(2)}</span>
+                <span className="font-medium">{fmt1(c.average)}</span>
               </li>
             ))}
           </ul>

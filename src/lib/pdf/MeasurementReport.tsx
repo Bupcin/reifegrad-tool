@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { MeasurementResult } from "@/lib/scoring";
+import { fmt1 } from "@/lib/format";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: "Helvetica" },
@@ -62,7 +63,7 @@ export default function MeasurementReport({ result }: { result: MeasurementResul
         <View style={styles.overallBox}>
           <Text style={styles.overallLabel}>Gesamtreifegrad</Text>
           <Text style={styles.overallValue}>
-            {result.overallScore?.toFixed(2) ?? "-"} / 5
+            {fmt1(result.overallScore, "-")} / 5,0
           </Text>
         </View>
 
@@ -71,13 +72,13 @@ export default function MeasurementReport({ result }: { result: MeasurementResul
           <View key={d.dimensionId} style={styles.dimensionBlock}>
             <View style={styles.dimensionHeader}>
               <Text>{d.name}</Text>
-              <Text>{d.average?.toFixed(2) ?? "-"} / 5</Text>
+              <Text>{fmt1(d.average, "-")} / 5,0</Text>
             </View>
             {d.criteria.map((c) => (
               <View key={c.criterionId}>
                 <View style={styles.criterionRow}>
                   <Text>{c.name}</Text>
-                  <Text>{c.average?.toFixed(2) ?? "-"}</Text>
+                  <Text>{fmt1(c.average, "-")}</Text>
                 </View>
                 {c.questions.map((q) => (
                   <View key={q.questionId} style={styles.questionRow}>
@@ -98,7 +99,7 @@ export default function MeasurementReport({ result }: { result: MeasurementResul
             <Text style={{ marginBottom: 4, fontWeight: 700 }}>Stärken</Text>
             {strengths.map((c) => (
               <Text key={c.criterionId}>
-                {c.name} ({c.dimensionName}): {c.average?.toFixed(2)}
+                {c.name} ({c.dimensionName}): {fmt1(c.average)}
               </Text>
             ))}
           </View>
@@ -106,7 +107,7 @@ export default function MeasurementReport({ result }: { result: MeasurementResul
             <Text style={{ marginBottom: 4, fontWeight: 700 }}>Handlungsfelder</Text>
             {weaknesses.map((c) => (
               <Text key={c.criterionId}>
-                {c.name} ({c.dimensionName}): {c.average?.toFixed(2)}
+                {c.name} ({c.dimensionName}): {fmt1(c.average)}
               </Text>
             ))}
           </View>

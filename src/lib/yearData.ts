@@ -1,7 +1,7 @@
 import type { MeasurementResult } from "@/lib/scoring";
 
 function round(v: number | null): number {
-  return v === null ? 0 : Number(v.toFixed(2));
+  return v === null ? 0 : v;
 }
 
 // Zeilen: Gesamt + je Dimension; Spalten: je Jahr (Säulen nebeneinander)

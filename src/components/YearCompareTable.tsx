@@ -1,5 +1,6 @@
 import type { MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
+import { fmt1 } from "@/lib/format";
 
 export function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
   return (
@@ -7,7 +8,7 @@ export function ScoreCell({ value, bold }: { value: number | null; bold?: boolea
       className={`border border-neutral-200 px-3 py-1 text-center text-xs ${bold ? "font-semibold" : "font-medium"}`}
       style={{ backgroundColor: scoreToColor(value), color: scoreToTextColor(value) }}
     >
-      {value !== null ? value.toFixed(2) : "nv"}
+      {fmt1(value, "nv")}
     </td>
   );
 }
@@ -16,16 +17,17 @@ export function DeltaCell({ from, to, bold }: { from: number | null; to: number 
   if (from === null || to === null) {
     return <td className="border border-neutral-200 px-3 py-1 text-center text-xs text-neutral-400">–</td>;
   }
-  const d = to - from;
-  const color = d > 0.05 ? "#15803d" : d < -0.05 ? "#b91c1c" : "#737373";
-  const arrow = d > 0.05 ? "▲" : d < -0.05 ? "▼" : "▬";
+  // erst auf eine Nachkommastelle runden, damit Pfeil und Anzeige zusammenpassen
+  const d = Math.round((to - from) * 10) / 10;
+  const color = d > 0 ? "#15803d" : d < 0 ? "#b91c1c" : "#737373";
+  const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "▬";
   return (
     <td
       className={`border border-neutral-200 px-3 py-1 text-center text-xs ${bold ? "font-semibold" : ""}`}
       style={{ color }}
     >
       {arrow} {d > 0 ? "+" : ""}
-      {d.toFixed(2)}
+      {fmt1(d)}
     </td>
   );
 }

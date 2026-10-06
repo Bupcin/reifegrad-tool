@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { createCompany, createProcess, getOrCreateMeasurement } from "./actions";
+import {
+  createCompany,
+  createProcess,
+  deleteCompany,
+  deleteProcessTree,
+  getOrCreateMeasurement,
+} from "./actions";
 import { redirect } from "next/navigation";
+import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 import { getMeasurementResult } from "@/lib/scoring";
 import YearCompareTable from "@/components/YearCompareTable";
 import YearBarChart from "@/components/YearBarChart";
@@ -25,6 +32,19 @@ async function createProcessAction(formData: FormData) {
   if (!name) return;
   const process = await createProcess(companyId, name, category, customer, parentId);
   redirect(`/?companyId=${companyId}&processId=${process.id}`);
+}
+
+async function deleteCompanyAction(formData: FormData) {
+  "use server";
+  await deleteCompany(String(formData.get("id")));
+  redirect("/");
+}
+
+async function deleteProcessAction(formData: FormData) {
+  "use server";
+  const companyId = String(formData.get("companyId"));
+  await deleteProcessTree(String(formData.get("id")));
+  redirect(`/?companyId=${companyId}`);
 }
 
 async function startMeasurementAction(formData: FormData) {
@@ -88,17 +108,24 @@ export default async function Home({
         <h2 className="font-medium text-lg">1. Unternehmen</h2>
         <div className="flex flex-wrap gap-2">
           {companies.map((c) => (
-            <Link
+            <span
               key={c.id}
-              href={`/?companyId=${c.id}`}
-              className={`rounded-full px-3 py-1 text-sm border ${
+              className={`inline-flex items-center rounded-full border pr-1 ${
                 selectedCompany?.id === c.id
                   ? "bg-brand text-white border-brand"
                   : "border-neutral-300 hover:bg-neutral-100"
               }`}
             >
-              {c.name}
-            </Link>
+              <Link href={`/?companyId=${c.id}`} className="py-1 pl-3 text-sm">
+                {c.name}
+              </Link>
+              <ConfirmDeleteButton
+                action={deleteCompanyAction}
+                fields={{ id: c.id }}
+                label={`Unternehmen „${c.name}“ löschen`}
+                message={`Unternehmen „${c.name}“ mit allen Geschäftsbereichen, Prozessen, Messungen und Antworten unwiderruflich löschen?`}
+              />
+            </span>
           ))}
         </div>
         <form action={createCompanyAction} className="flex gap-2 pt-2">
@@ -118,7 +145,7 @@ export default async function Home({
       {selectedCompany && (
         <section className="space-y-3 rounded-lg border border-neutral-200 p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-medium text-lg">2. Prozess</h2>
+            <h2 className="font-medium text-lg">2. Geschäftsbereich bzw. Abteilung</h2>
             <Link
               href={`/auswertung/${selectedCompany.id}`}
               className="text-sm text-brand hover:underline"
@@ -127,19 +154,36 @@ export default async function Home({
             </Link>
           </div>
           <div className="flex flex-wrap gap-2">
-            {processes.map((p) => (
-              <Link
-                key={p.id}
-                href={`/?companyId=${selectedCompany.id}&processId=${p.id}`}
-                className={`rounded-full px-3 py-1 text-sm border ${
-                  selectedProcess?.id === p.id
-                    ? "bg-brand text-white border-brand"
-                    : "border-neutral-300 hover:bg-neutral-100"
-                }`}
-              >
-                {p.parent ? `${p.parent.name} › ${p.name}` : p.name}
-              </Link>
-            ))}
+            {processes.map((p) => {
+              const childCount = processes.filter((x) => x.parentId === p.id).length;
+              return (
+                <span
+                  key={p.id}
+                  className={`inline-flex items-center rounded-full border pr-1 ${
+                    selectedProcess?.id === p.id
+                      ? "bg-brand text-white border-brand"
+                      : "border-neutral-300 hover:bg-neutral-100"
+                  }`}
+                >
+                  <Link
+                    href={`/?companyId=${selectedCompany.id}&processId=${p.id}`}
+                    className="py-1 pl-3 text-sm"
+                  >
+                    {p.parent ? `${p.parent.name} › ${p.name}` : p.name}
+                  </Link>
+                  <ConfirmDeleteButton
+                    action={deleteProcessAction}
+                    fields={{ id: p.id, companyId: selectedCompany.id }}
+                    label={`„${p.name}“ löschen`}
+                    message={
+                      childCount > 0
+                        ? `„${p.name}“ mit ${childCount} zugeordneten Prozessen sowie allen Messungen und Antworten unwiderruflich löschen?`
+                        : `„${p.name}“ mit allen Messungen und Antworten unwiderruflich löschen?`
+                    }
+                  />
+                </span>
+              );
+            })}
           </div>
           <form action={createProcessAction} className="grid grid-cols-2 gap-2 pt-2">
             <input type="hidden" name="companyId" value={selectedCompany.id} />

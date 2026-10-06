@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCompanyYearData, type MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
+import { fmt1 } from "@/lib/format";
 import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
 import YearBarChart from "@/components/YearBarChart";
 import YearCompareTable, { DeltaCell, ScoreCell } from "@/components/YearCompareTable";
@@ -53,14 +54,9 @@ function Cell({
       className={`border border-neutral-200 px-2 text-center ${small ? "py-0.5 text-[11px]" : "py-1 text-xs"} ${bold ? "font-semibold" : "font-medium"}`}
       style={{ backgroundColor: scoreToColor(value), color: scoreToTextColor(value) }}
     >
-      {value !== null ? value.toFixed(2) : "nv"}
+      {fmt1(value, "nv")}
     </td>
   );
-}
-
-function avg(values: (number | null)[]): number | null {
-  const v = values.filter((x): x is number => x !== null);
-  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
 }
 
 export default async function Auswertung({
@@ -173,7 +169,7 @@ export default async function Auswertung({
                           className="border border-neutral-200 px-2 text-center text-sm font-semibold"
                           style={{ backgroundColor: scoreToColor(d.average), color: scoreToTextColor(d.average) }}
                         >
-                          {d.average?.toFixed(2) ?? "nv"}
+                          {fmt1(d.average, "nv")}
                         </td>
                       )}
                     </tr>
@@ -214,17 +210,14 @@ export default async function Auswertung({
             <GroupStackedChart
               data={groupRows.map((g) => ({
                 name: g.name,
-                grad: Number((g.result!.overallScore ?? 0).toFixed(2)),
-                potential: Number((5 - (g.result!.overallScore ?? 0)).toFixed(2)),
+                grad: g.result!.overallScore ?? 0,
+                potential: 5 - (g.result!.overallScore ?? 0),
               }))}
             />
           </section>
           <section className="rounded-lg border border-neutral-200 p-5">
-            <h2 className="mb-2 text-center font-medium">Mittelwert Digitalisierungsgrad</h2>
-            <GaugeDonut
-              value={avg(groupRows.map((g) => g.result!.overallScore)) ?? 0}
-              label="Mittelwert Geschäftsbereiche"
-            />
+            <h2 className="mb-2 text-center font-medium">Digitaler Reifegrad</h2>
+            <GaugeDonut value={companyResult.overallScore ?? 0} label="von 5" />
           </section>
         </div>
       )}
@@ -236,7 +229,7 @@ export default async function Auswertung({
             dimensions={dimensionNames}
             data={groupRows.map((g) => {
               const row: Record<string, number | string> = { name: g.name };
-              for (const d of g.result!.dimensions) row[d.name] = Number((d.average ?? 0).toFixed(2));
+              for (const d of g.result!.dimensions) row[d.name] = d.average ?? 0;
               return row;
             })}
           />
@@ -262,7 +255,7 @@ export default async function Auswertung({
               years={ascYears.map(String)}
               data={yearGroups.map((g) => {
                 const row: Record<string, number | string> = { name: g.name };
-                ascYears.forEach((y, i) => (row[String(y)] = Number((g.values[i] ?? 0).toFixed(2))));
+                ascYears.forEach((y, i) => (row[String(y)] = g.values[i] ?? 0));
                 return row;
               })}
             />
@@ -324,7 +317,7 @@ export default async function Auswertung({
                     className="rounded px-2 py-0.5 text-xs font-semibold"
                     style={{ backgroundColor: scoreToColor(c.average), color: scoreToTextColor(c.average) }}
                   >
-                    {c.average?.toFixed(2)}
+                    {fmt1(c.average)}
                   </span>
                 </li>
               ))}
@@ -358,7 +351,7 @@ export default async function Auswertung({
                                   className="rounded px-1.5 py-0.5 text-xs font-semibold"
                                   style={{ backgroundColor: scoreToColor(weak[i].average), color: scoreToTextColor(weak[i].average) }}
                                 >
-                                  {weak[i].average?.toFixed(2)}
+                                  {fmt1(weak[i].average)}
                                 </span>
                               </span>
                             ) : (
@@ -402,13 +395,11 @@ function TabellarischeAuswertung({
     out.push(<Cell key="grad" small={small} bold value={grad} />);
     out.push(
       <td key="pot" className={`border border-neutral-200 px-2 text-center ${small ? "text-[11px]" : "text-xs"}`}>
-        {grad !== null ? (5 - grad).toFixed(2) : ""}
+        {grad !== null ? fmt1(5 - grad) : ""}
       </td>
     );
     return out;
   }
-
-  const mean = avg(groupRows.map((g) => g.result!.overallScore));
 
   return (
     <section className="space-y-2">
@@ -467,7 +458,7 @@ function TabellarischeAuswertung({
         </table>
       </div>
       <p className="text-xs text-neutral-500">
-        Mittelwert Digitalisierungsgrad (Ø der Geschäftsbereiche): {mean !== null ? mean.toFixed(3) : "–"} · Digitalisierungspotential = Abstand zum Maximum 5.
+        Digitaler Reifegrad {companyName}: {fmt1(companyResult.overallScore)} · Digitalisierungspotential = Abstand zum Maximum 5.
       </p>
       <div className="flex gap-4 text-xs text-neutral-500">
         <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: "rgb(220,38,38)" }} />1 – nicht digital</span>

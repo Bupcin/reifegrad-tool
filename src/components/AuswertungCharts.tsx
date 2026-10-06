@@ -14,10 +14,11 @@ import {
   YAxis,
 } from "recharts";
 import { DIMENSION_COLORS } from "@/lib/dimensionColors";
+import { fmt1 } from "@/lib/format";
 
 const BRAND = "#075a72";
 
-const fmt = (v: unknown) => Number(v).toFixed(2);
+const fmt = (v: unknown) => fmt1(Number(v));
 
 export function GaugeDonut({
   value,
@@ -51,7 +52,7 @@ export function GaugeDonut({
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-semibold">{value.toFixed(2)}</span>
+        <span className="text-3xl font-semibold">{fmt1(value)}</span>
         <span className="text-xs text-neutral-500">{label}</span>
       </div>
     </div>

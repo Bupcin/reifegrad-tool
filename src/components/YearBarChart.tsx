@@ -11,11 +11,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { fmt1 } from "@/lib/format";
 
 // deutlich unterscheidbare Farben, ältestes Jahr zuerst
 const YEAR_COLORS = ["#f59e0b", "#075a72", "#16a34a", "#7c3aed", "#dc2626", "#0ea5e9"];
 
-const fmt = (v: unknown) => Number(v).toFixed(2);
+const fmt = (v: unknown) => fmt1(Number(v));
 
 export default function YearBarChart({
   data,

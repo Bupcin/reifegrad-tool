@@ -46,6 +46,27 @@ export async function getOrCreateMeasurement(processId: string, year: number) {
   return measurement;
 }
 
+export async function deleteCompany(id: string) {
+  // Prozesse, Messungen und Antworten werden per Cascade mitgelöscht
+  await prisma.company.delete({ where: { id } });
+  revalidatePath("/");
+}
+
+// Löscht einen Geschäftsbereich bzw. Prozess samt aller untergeordneten Einträge
+// (deren Messungen und Antworten fallen per Cascade weg).
+export async function deleteProcessTree(id: string) {
+  const ids = [id];
+  for (let i = 0; i < ids.length; i++) {
+    const children = await prisma.process.findMany({
+      where: { parentId: ids[i] },
+      select: { id: true },
+    });
+    ids.push(...children.map((c) => c.id));
+  }
+  await prisma.process.deleteMany({ where: { id: { in: ids } } });
+  revalidatePath("/");
+}
+
 export async function saveAnswer(
   measurementId: string,
   questionId: string,
