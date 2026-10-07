@@ -14,7 +14,8 @@ import {
 import { fmt1 } from "@/lib/format";
 
 // deutlich unterscheidbare Farben, ältestes Jahr zuerst
-const YEAR_COLORS = ["#f59e0b", "#075a72", "#16a34a", "#7c3aed", "#dc2626", "#0ea5e9"];
+// Excel-Vergleich „Analyse A" blau (1964FF), „Analyse B" grün (28D296), danach weitere Excel-Farben
+const YEAR_COLORS = ["#1964FF", "#28D296", "#FAC800", "#FF5041", "#07262D", "#5B9BD5"];
 
 const fmt = (v: unknown) => fmt1(Number(v));
 
@@ -30,12 +31,12 @@ export default function YearBarChart({
   const colors = years.map((_, i) => YEAR_COLORS[i % YEAR_COLORS.length]);
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 20, bottom: 50 }}>
+      <BarChart data={data} margin={{ top: 20, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" tick={{ fontSize: 11 }} />
+        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
         <YAxis domain={[0, 5]} />
         <Tooltip formatter={fmt} />
-        <Legend verticalAlign="top" />
+        <Legend verticalAlign="bottom" itemSorter={null} />
         {years.map((y, i) => (
           <Bar key={y} dataKey={y} isAnimationActive={false} fill={colors[i]}>
             <LabelList dataKey={y} position="top" formatter={fmt} style={{ fontSize: 10 }} />

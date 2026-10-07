@@ -56,8 +56,8 @@ export default function CriteriaRadarChart({ data }: { data: CriteriaRadarDatum[
           isAnimationActive={false}
           name="Reifegrad"
           dataKey="value"
-          stroke="#075a72"
-          fill="#075a72"
+          stroke="#1964FF"
+          fill="#1964FF"
           fillOpacity={0.25}
           dot={<ColoredDot />}
         />

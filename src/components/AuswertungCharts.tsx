@@ -16,7 +16,10 @@ import {
 import { DIMENSION_COLORS } from "@/lib/dimensionColors";
 import { fmt1 } from "@/lib/format";
 
-const BRAND = "#075a72";
+// Farben aus den Excel-Diagrammen: Ring blau, Digitalisierungsgrad blau, Potential grau
+const EXCEL_BLUE = "#1964FF";
+const EXCEL_GRAD = "#4472C4";
+const EXCEL_POTENTIAL = "#A5A5A5";
 
 const fmt = (v: unknown) => fmt1(Number(v));
 
@@ -46,7 +49,7 @@ export function GaugeDonut({
             endAngle={-270}
             stroke="none"
           >
-            <Cell fill={BRAND} />
+            <Cell fill={EXCEL_BLUE} />
             <Cell fill="#e5e5e5" />
           </Pie>
         </PieChart>
@@ -66,14 +69,14 @@ export function GroupStackedChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={380}>
-      <BarChart data={data} margin={{ bottom: 40 }}>
+      <BarChart data={data} margin={{ bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" tick={{ fontSize: 11 }} />
+        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
         <YAxis domain={[0, 5]} />
         <Tooltip formatter={fmt} />
-        <Legend verticalAlign="top" />
-        <Bar isAnimationActive={false} dataKey="grad" name="Digitalisierungsgrad" stackId="a" fill={BRAND} />
-        <Bar isAnimationActive={false} dataKey="potential" name="Digitalisierungspotential" stackId="a" fill="#d4d4d4" />
+        <Legend verticalAlign="bottom" itemSorter={null} />
+        <Bar isAnimationActive={false} dataKey="grad" name="Digitalisierungsgrad" stackId="a" fill={EXCEL_GRAD} />
+        <Bar isAnimationActive={false} dataKey="potential" name="Digitalisierungspotential" stackId="a" fill={EXCEL_POTENTIAL} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -88,12 +91,12 @@ export function DimensionColumnChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={data} margin={{ bottom: 40 }}>
+      <BarChart data={data} margin={{ bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" tick={{ fontSize: 11 }} />
+        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
         <YAxis domain={[0, 5]} />
         <Tooltip formatter={fmt} />
-        <Legend verticalAlign="top" />
+        <Legend verticalAlign="bottom" itemSorter={null} />
         {dimensions.map((d, i) => (
           <Bar isAnimationActive={false} key={d} dataKey={d} fill={DIMENSION_COLORS[i % DIMENSION_COLORS.length]} />
         ))}

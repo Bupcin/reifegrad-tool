@@ -5,6 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { getCompanyYearData, type MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 import { fmt1 } from "@/lib/format";
+import ScoreLegend from "@/components/ScoreLegend";
+import {
+  DIMENSION_HEADER_LIGHT,
+  DIMENSION_HEADER_STRONG,
+  DIMENSION_HEADER_TEXT,
+} from "@/lib/dimensionColors";
 import { yearBarCriteria, yearBarDimensions } from "@/lib/yearData";
 import YearBarChart from "@/components/YearBarChart";
 import YearCompareTable, { DeltaCell, ScoreCell } from "@/components/YearCompareTable";
@@ -184,6 +190,7 @@ export default async function Auswertung({
                 </tr>
               </tbody>
             </table>
+            <ScoreLegend />
           </section>
 
           <div className="space-y-6">
@@ -281,6 +288,7 @@ export default async function Auswertung({
                 ))}
               </tbody>
             </table>
+            <ScoreLegend />
           </section>
 
           <section className="rounded-lg border border-neutral-200 p-5">
@@ -365,6 +373,7 @@ export default async function Auswertung({
                 </tbody>
               </table>
             </div>
+            <ScoreLegend />
           </section>
         </div>
       )}
@@ -410,8 +419,13 @@ function TabellarischeAuswertung({
               <th rowSpan={2} className="sticky left-0 z-10 border border-neutral-200 bg-neutral-50 px-3 py-2 text-left">
                 Geschäftsbereich / Prozess
               </th>
-              {template.map((d) => (
-                <th key={d.dimensionId} colSpan={d.criteria.length + 1} className="border border-neutral-200 px-2 py-1">
+              {template.map((d, di) => (
+                <th
+                  key={d.dimensionId}
+                  colSpan={d.criteria.length + 1}
+                  className="border border-neutral-200 px-2 py-1"
+                  style={{ backgroundColor: DIMENSION_HEADER_STRONG[di], color: DIMENSION_HEADER_TEXT[di] }}
+                >
                   {d.order}) {d.name}
                 </th>
               ))}
@@ -419,11 +433,23 @@ function TabellarischeAuswertung({
               <th rowSpan={2} className="border border-neutral-200 px-2 py-1 text-xs">Digitalisierungspotential</th>
             </tr>
             <tr className="bg-neutral-50 text-[11px]">
-              {template.flatMap((d) => [
+              {template.flatMap((d, di) => [
                 ...d.criteria.map((c) => (
-                  <th key={c.criterionId} className="border border-neutral-200 px-1 py-1 font-normal">{c.name}</th>
+                  <th
+                    key={c.criterionId}
+                    className="border border-neutral-200 px-1 py-1 font-normal text-black"
+                    style={{ backgroundColor: DIMENSION_HEADER_LIGHT[di] }}
+                  >
+                    {c.name}
+                  </th>
                 )),
-                <th key={`h${d.dimensionId}`} className="border border-neutral-200 px-1 py-1">Ø</th>,
+                <th
+                  key={`h${d.dimensionId}`}
+                  className="border border-neutral-200 px-1 py-1"
+                  style={{ backgroundColor: DIMENSION_HEADER_STRONG[di], color: DIMENSION_HEADER_TEXT[di] }}
+                >
+                  Ø
+                </th>,
               ])}
             </tr>
           </thead>
@@ -457,15 +483,10 @@ function TabellarischeAuswertung({
           </tbody>
         </table>
       </div>
+      <ScoreLegend />
       <p className="text-xs text-neutral-500">
         Digitaler Reifegrad {companyName}: {fmt1(companyResult.overallScore)} · Digitalisierungspotential = Abstand zum Maximum 5.
       </p>
-      <div className="flex gap-4 text-xs text-neutral-500">
-        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: "rgb(220,38,38)" }} />1 – nicht digital</span>
-        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: "rgb(234,179,8)" }} />3 – teilweise digital</span>
-        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: "rgb(22,163,74)" }} />5 – vollständig digital</span>
-        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-neutral-200" />nicht bewertbar</span>
-      </div>
     </section>
   );
 }

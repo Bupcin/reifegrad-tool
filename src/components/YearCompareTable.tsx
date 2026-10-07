@@ -1,6 +1,7 @@
 import type { MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 import { fmt1 } from "@/lib/format";
+import ScoreLegend from "@/components/ScoreLegend";
 
 export function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
   return (
@@ -68,6 +69,7 @@ export default function YearCompareTable({ results }: { results: MeasurementResu
           ))}
         </tbody>
       </table>
+      <ScoreLegend />
     </div>
   );
 }

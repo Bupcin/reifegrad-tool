@@ -1,29 +1,24 @@
-// Farbskala analog zur bedingten Formatierung im Excel-Cockpit:
-// 1 = rot (nicht digital) ... 3 = gelb (teilweise) ... 5 = grün (vollständig digital)
+// Farbstufen wie die bedingte Formatierung im Excel-Blatt „MaßnahmenIdentifizierung":
+//   4,6 - 5,0 dunkelgrün | 3,6 - 4,5 hellgrün | 3,0 - 3,5 gelb | 1,0 - 2,9 rot
+// Bewertet wird der auf eine Nachkommastelle gerundete (= angezeigte) Wert.
+// „nicht bewertbar" bleibt wie in Excel ohne Füllung.
 
-function lerp(a: number, b: number, t: number): number {
-  return Math.round(a + (b - a) * t);
-}
-
-function mix(c1: [number, number, number], c2: [number, number, number], t: number) {
-  return `rgb(${lerp(c1[0], c2[0], t)}, ${lerp(c1[1], c2[1], t)}, ${lerp(c1[2], c2[2], t)})`;
-}
-
-const RED: [number, number, number] = [220, 38, 38]; // #dc2626
-const YELLOW: [number, number, number] = [234, 179, 8]; // #eab308
-const GREEN: [number, number, number] = [22, 163, 74]; // #16a34a
-const NEUTRAL = "rgb(229, 229, 229)"; // neutral-200, für "nv"
+export const SCORE_STEPS = [
+  { color: "#00B050", range: "4,6 – 5,0" },
+  { color: "#92D050", range: "3,6 – 4,5" },
+  { color: "#FFFF00", range: "3,0 – 3,5" },
+  { color: "#FF0000", range: "1,0 – 2,9" },
+];
 
 export function scoreToColor(value: number | null): string {
-  if (value === null) return NEUTRAL;
-  const clamped = Math.min(5, Math.max(1, value));
-  if (clamped <= 3) {
-    return mix(RED, YELLOW, (clamped - 1) / 2);
-  }
-  return mix(YELLOW, GREEN, (clamped - 3) / 2);
+  if (value === null || Number.isNaN(value)) return "transparent";
+  const r = Math.round(value * 10) / 10;
+  if (r >= 4.6) return SCORE_STEPS[0].color;
+  if (r >= 3.6) return SCORE_STEPS[1].color;
+  if (r >= 3.0) return SCORE_STEPS[2].color;
+  return SCORE_STEPS[3].color;
 }
 
 export function scoreToTextColor(value: number | null): string {
-  if (value === null) return "rgb(115, 115, 115)"; // neutral-500
-  return value < 2.5 ? "#7f1d1d" : value < 4 ? "#713f12" : "#14532d";
+  return value === null ? "#737373" : "#000000";
 }
