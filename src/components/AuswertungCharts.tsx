@@ -69,10 +69,10 @@ export function GroupStackedChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={380}>
-      <BarChart data={data} margin={{ bottom: 10 }}>
+      <BarChart data={data} margin={{ top: 14, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
-        <YAxis domain={[0, 5]} />
+        <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} interval={0} />
         <Tooltip formatter={fmt} />
         <Legend verticalAlign="bottom" itemSorter={null} />
         <Bar isAnimationActive={false} dataKey="grad" name="Digitalisierungsgrad" stackId="a" fill={EXCEL_GRAD} />
@@ -91,10 +91,10 @@ export function DimensionColumnChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={data} margin={{ bottom: 10 }}>
+      <BarChart data={data} margin={{ top: 14, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
-        <YAxis domain={[0, 5]} />
+        <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} interval={0} />
         <Tooltip formatter={fmt} />
         <Legend verticalAlign="bottom" itemSorter={null} />
         {dimensions.map((d, i) => (

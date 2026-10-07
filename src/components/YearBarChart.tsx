@@ -34,7 +34,7 @@ export default function YearBarChart({
       <BarChart data={data} margin={{ top: 20, bottom: 10 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
-        <YAxis domain={[0, 5]} />
+        <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} interval={0} />
         <Tooltip formatter={fmt} />
         <Legend verticalAlign="bottom" itemSorter={null} />
         {years.map((y, i) => (
