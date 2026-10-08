@@ -28,7 +28,7 @@ function AngleTick(props: AngleTickProps & { colorMap: Map<string, number> }) {
   if (!payload) return null;
   const color = dimensionColor(colorMap.get(payload.value) ?? 0);
   return (
-    <text x={x} y={y} textAnchor={textAnchor as never} fill={color} fontSize={11}>
+    <text x={x} y={y} textAnchor={textAnchor as never} fill={color} fontSize={10}>
       {payload.value}
     </text>
   );
@@ -45,7 +45,7 @@ export default function CriteriaRadarChart({ data }: { data: CriteriaRadarDatum[
 
   return (
     <ResponsiveContainer width="100%" height={420}>
-      <RadarChart data={data} outerRadius="70%">
+      <RadarChart data={data} outerRadius="68%" margin={{ top: 10, right: 50, bottom: 10, left: 50 }}>
         <PolarGrid />
         <PolarAngleAxis
           dataKey="name"

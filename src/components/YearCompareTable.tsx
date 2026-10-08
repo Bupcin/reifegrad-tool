@@ -2,6 +2,11 @@ import type { MeasurementResult } from "@/lib/scoring";
 import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 import { fmt1 } from "@/lib/format";
 import ScoreLegend from "@/components/ScoreLegend";
+import {
+  DIMENSION_HEADER_LIGHT,
+  DIMENSION_HEADER_STRONG,
+  DIMENSION_HEADER_TEXT,
+} from "@/lib/dimensionColors";
 
 export function ScoreCell({ value, bold }: { value: number | null; bold?: boolean }) {
   return (
@@ -90,7 +95,10 @@ function DimensionRows({
   return (
     <>
       <tr>
-        <td className="border border-neutral-200 px-3 py-1.5 font-medium">
+        <td
+          className="border border-neutral-200 px-3 py-1.5 font-semibold"
+          style={{ backgroundColor: DIMENSION_HEADER_STRONG[di], color: DIMENSION_HEADER_TEXT[di] }}
+        >
           {dim.order}) {dim.name}
         </td>
         {results.map((r) => (
@@ -100,7 +108,12 @@ function DimensionRows({
       </tr>
       {dim.criteria.map((c, ci) => (
         <tr key={c.criterionId}>
-          <td className="border border-neutral-200 py-1 pl-8 pr-3 text-xs text-neutral-600">{c.name}</td>
+          <td
+            className="border border-neutral-200 py-1 pl-8 pr-3 text-xs text-black"
+            style={{ backgroundColor: DIMENSION_HEADER_LIGHT[di] }}
+          >
+            {c.name}
+          </td>
           {results.map((r) => (
             <ScoreCell key={r.measurementId} value={r.dimensions[di]?.criteria[ci]?.average ?? null} />
           ))}

@@ -7,6 +7,7 @@ import { scoreToColor, scoreToTextColor } from "@/lib/colorScale";
 import { fmt1 } from "@/lib/format";
 import ScoreLegend from "@/components/ScoreLegend";
 import {
+  DIMENSION_COLORS,
   DIMENSION_HEADER_LIGHT,
   DIMENSION_HEADER_STRONG,
   DIMENSION_HEADER_TEXT,
@@ -34,14 +35,15 @@ interface Handlungsfeld {
   criterionId: string;
   name: string;
   dimensionName: string;
+  dimIndex: number;
   average: number | null;
 }
 
 function weakestCriteria(result: MeasurementResult, n: number): Handlungsfeld[] {
-  const all = result.dimensions.flatMap((d) =>
+  const all = result.dimensions.flatMap((d, di) =>
     d.criteria
       .filter((c) => c.average !== null)
-      .map((c) => ({ criterionId: c.criterionId, name: c.name, dimensionName: d.name, average: c.average }))
+      .map((c) => ({ criterionId: c.criterionId, name: c.name, dimensionName: d.name, dimIndex: di, average: c.average }))
   );
   return all.sort((a, b) => (a.average ?? 0) - (b.average ?? 0)).slice(0, n);
 }
@@ -159,15 +161,24 @@ export default async function Auswertung({
                 </tr>
               </thead>
               <tbody>
-                {companyResult.dimensions.map((d) =>
+                {companyResult.dimensions.map((d, di) =>
                   d.criteria.map((c, i) => (
                     <tr key={c.criterionId}>
                       {i === 0 && (
-                        <td rowSpan={d.criteria.length} className="border border-neutral-200 px-2 py-1 font-medium align-middle">
+                        <td
+                          rowSpan={d.criteria.length}
+                          className="border border-neutral-200 px-2 py-1 font-semibold align-middle"
+                          style={{ backgroundColor: DIMENSION_HEADER_STRONG[di], color: DIMENSION_HEADER_TEXT[di] }}
+                        >
                           {d.order}) {d.name}
                         </td>
                       )}
-                      <td className="border border-neutral-200 px-2 py-1">{c.name}</td>
+                      <td
+                        className="border border-neutral-200 px-2 py-1 text-black"
+                        style={{ backgroundColor: DIMENSION_HEADER_LIGHT[di] }}
+                      >
+                        {c.name}
+                      </td>
                       <Cell value={c.average} />
                       {i === 0 && (
                         <td
@@ -320,7 +331,13 @@ export default async function Auswertung({
             <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
               {weakestCriteria(companyResult, 5).map((c) => (
                 <li key={c.criterionId} className="flex items-center justify-between gap-3 rounded bg-white px-3 py-1.5">
-                  <span>{c.name} <span className="text-neutral-500">({c.dimensionName})</span></span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: DIMENSION_COLORS[c.dimIndex] }}
+                    />
+                    <span>{c.name} <span className="text-neutral-500">({c.dimensionName})</span></span>
+                  </span>
                   <span
                     className="rounded px-2 py-0.5 text-xs font-semibold"
                     style={{ backgroundColor: scoreToColor(c.average), color: scoreToTextColor(c.average) }}
@@ -351,7 +368,11 @@ export default async function Auswertung({
                       <tr key={g.id}>
                         <td className="border border-neutral-200 px-3 py-1.5 font-medium">{g.name}</td>
                         {[0, 1, 2].map((i) => (
-                          <td key={i} className="border border-neutral-200 px-3 py-1.5">
+                          <td
+                            key={i}
+                            className="border border-neutral-200 px-3 py-1.5"
+                            style={weak[i] ? { backgroundColor: DIMENSION_HEADER_LIGHT[weak[i].dimIndex] } : undefined}
+                          >
                             {weak[i] ? (
                               <span className="flex items-center justify-between gap-2">
                                 <span>{weak[i].name}</span>
